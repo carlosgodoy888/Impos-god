@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  HomeView.swift
 //  Impos-God
 //
 //  Created by Carlos Godoy Valverde on 26/3/26.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ContentView: View {
+struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
@@ -36,15 +36,15 @@ struct ContentView: View {
                     Spacer()
 
                     VStack(spacing: 16) {
-                        NavigationLink(destination: PlaceholderScreen(title: "Nueva partida")) {
+                        NavigationLink(destination: SetupView()) {
                             HomeButton(title: "Nueva partida", icon: "play.fill")
                         }
 
-                        NavigationLink(destination: PlaceholderScreen(title: "Biblioteca de temas")) {
+                        NavigationLink(destination: ThemeLibraryView()) {
                             HomeButton(title: "Biblioteca de temas", icon: "books.vertical.fill")
                         }
 
-                        NavigationLink(destination: PlaceholderScreen(title: "Ajustes")) {
+                        NavigationLink(destination: SettingsView()) {
                             HomeButton(title: "Ajustes", icon: "gearshape.fill")
                         }
                     }
@@ -82,22 +82,6 @@ private struct HomeButton: View {
     }
 }
 
-private struct PlaceholderScreen: View {
-    let title: String
-
-    var body: some View {
-        ZStack {
-            Color(.systemBackground)
-                .ignoresSafeArea()
-
-            Text(title)
-                .font(.title2.bold())
-        }
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
 #Preview {
-    ContentView()
+    HomeView()
 }
