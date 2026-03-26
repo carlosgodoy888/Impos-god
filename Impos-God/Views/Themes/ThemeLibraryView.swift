@@ -15,14 +15,14 @@ struct ThemeLibraryView: View {
     @State private var newThemeWords: String = ""
     @State private var searchText: String = ""
 
-    private let orderedCategories: [ThemeCategory] = [.actualidad, .series, .general, .custom]
-
     private var filteredThemes: [Theme] {
-        if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        let query = searchText
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+
+        if query.isEmpty {
             return appViewModel.allThemes
         }
-
-        let query = searchText.lowercased()
 
         return appViewModel.allThemes.filter { theme in
             theme.name.lowercased().contains(query) ||
@@ -30,12 +30,14 @@ struct ThemeLibraryView: View {
         }
     }
 
-    private var groupedThemes: [ThemeCategory: [Theme]] {
-        Dictionary(grouping: filteredThemes, by: \.category)
-    }
-
     var body: some View {
         List {
+            Section("Buscar") {
+                TextField("Buscar tema o palabra", text: $searchText)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+            }
+
             Section("Crear tema personalizado") {
                 TextField("Nombre del tema", text: $newThemeName)
                 TextField("Palabras separadas por comas", text: $newThemeWords)
@@ -47,36 +49,36 @@ struct ThemeLibraryView: View {
                 }
             }
 
-            ForEach(orderedCategories) { category in
-                let themes = groupedThemes[category] ?? []
+            Section("Temas disponibles") {
+                ForEach(filteredThemes, id: \.id) { theme in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(theme.name)
+                            .font(.headline)
 
-                if !themes.isEmpty {
-                    Section {
-                        ForEach(themes) { theme in
-                            ThemeCardView(theme: theme)
-                                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
-                                .listRowBackground(Color.clear)
-                                .listRowSeparator(.hidden)
-                                .swipeActions {
-                                    if theme.isCustom {
-                                        Button(role: .destructive) {
-                                            appViewModel.deleteCustomTheme(theme)
-                                        } label: {
-                                            Label("Eliminar", systemImage: "trash")
-                                        }
-                                    }
-                                }
+                        Text(theme.words.prefix(3).joined(separator: ", "))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+
+                        if theme.isCustom {
+                            Button(role: .destructive) {
+                                deleteTheme(theme)
+                            } label: {
+                                Label("Eliminar tema", systemImage: "trash")
+                            }
                         }
-                    } header: {
-                        Label(category.rawValue, systemImage: category.systemImage)
                     }
+                    .padding(.vertical, 4)
                 }
             }
         }
-        .searchable(text: $searchText, prompt: "Buscar tema o palabra")
         .navigationTitle("Biblioteca")
         .navigationBarTitleDisplayMode(.inline)
         .listStyle(.insetGrouped)
+    }
+
+    private func deleteTheme(_ theme: Theme) {
+        appViewModel.deleteCustomTheme(theme)
     }
 }
 

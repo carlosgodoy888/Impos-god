@@ -24,7 +24,11 @@ struct RevealFlowView: View {
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [.black, .purple.opacity(0.85), .blue.opacity(0.75)],
+                colors: [
+                    Color.black,
+                    Color(red: 0.16, green: 0.08, blue: 0.30),
+                    Color(red: 0.08, green: 0.16, blue: 0.28)
+                ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -176,11 +180,11 @@ struct RevealFlowView: View {
 
     private var impostorCard: some View {
         ZStack(alignment: .bottom) {
-            if let image = UIImage(named: "ImpostorCardBackground") {
-                Image(uiImage: image)
+            if UIImage(named: "foto_impostor") != nil {
+                Image("foto_impostor")
                     .resizable()
                     .scaledToFill()
-                    .frame(height: 430)
+                    .frame(height: 440)
                     .frame(maxWidth: .infinity)
                     .clipped()
             } else {
@@ -189,16 +193,23 @@ struct RevealFlowView: View {
                     startPoint: .top,
                     endPoint: .bottom
                 )
-                .frame(height: 430)
+                .frame(height: 440)
             }
 
             LinearGradient(
-                colors: [.clear, .black.opacity(0.25), .black.opacity(0.8)],
+                colors: [.clear, .black.opacity(0.22), .black.opacity(0.82)],
                 startPoint: .top,
                 endPoint: .bottom
             )
 
             VStack(spacing: 16) {
+                if UIImage(named: "logo_impostor") != nil {
+                    Image("logo_impostor")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 64)
+                }
+
                 Text("ERES EL IMPOSTOR")
                     .font(.system(size: 30, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white)

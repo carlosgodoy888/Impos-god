@@ -34,34 +34,48 @@ struct ThemePickerView: View {
     }
 
     var body: some View {
-        List {
-            ForEach(orderedCategories) { category in
-                let themes = groupedThemes[category] ?? []
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.05, green: 0.05, blue: 0.14),
+                    Color(red: 0.12, green: 0.10, blue: 0.28),
+                    Color(red: 0.07, green: 0.12, blue: 0.22)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
 
-                if !themes.isEmpty {
-                    Section {
-                        ForEach(themes) { theme in
-                            ThemeCardView(
-                                theme: theme,
-                                isSelected: selectedThemeID == theme.id
-                            ) {
-                                selectedThemeID = theme.id
-                                dismiss()
+            List {
+                ForEach(orderedCategories) { category in
+                    let themes = groupedThemes[category] ?? []
+
+                    if !themes.isEmpty {
+                        Section {
+                            ForEach(themes) { theme in
+                                ThemeCardView(
+                                    theme: theme,
+                                    isSelected: selectedThemeID == theme.id
+                                ) {
+                                    selectedThemeID = theme.id
+                                    dismiss()
+                                }
+                                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
                             }
-                            .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
+                        } header: {
+                            Label(category.rawValue, systemImage: category.systemImage)
                         }
-                    } header: {
-                        Label(category.rawValue, systemImage: category.systemImage)
                     }
                 }
             }
+            .searchable(text: $searchText, prompt: "Buscar tema o palabra")
+            .scrollContentBackground(.hidden)
+            .listStyle(.insetGrouped)
         }
-        .searchable(text: $searchText, prompt: "Buscar tema o palabra")
         .navigationTitle("Elegir tema")
         .navigationBarTitleDisplayMode(.inline)
-        .listStyle(.insetGrouped)
     }
 }
 

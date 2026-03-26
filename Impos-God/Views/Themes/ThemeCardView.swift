@@ -30,11 +30,11 @@ struct ThemeCardView: View {
         HStack(spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(theme.category.tint.opacity(0.18))
+                    .fill(iconColor.opacity(0.18))
                     .frame(width: 42, height: 42)
 
                 Image(systemName: theme.category.systemImage)
-                    .foregroundStyle(theme.category.tint)
+                    .foregroundStyle(iconColor)
                     .font(.headline)
             }
 
@@ -53,7 +53,7 @@ struct ThemeCardView: View {
 
             if isSelected {
                 Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(theme.category.tint)
+                    .foregroundStyle(iconColor)
                     .font(.title3)
             }
         }
@@ -62,8 +62,8 @@ struct ThemeCardView: View {
         .background(
             LinearGradient(
                 colors: [
-                    theme.category.gradientStart.opacity(0.22),
-                    theme.category.gradientEnd.opacity(0.12)
+                    gradientStart.opacity(0.22),
+                    gradientEnd.opacity(0.12)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -72,7 +72,7 @@ struct ThemeCardView: View {
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .stroke(isSelected ? theme.category.tint : .clear, lineWidth: 2)
+                .stroke(isSelected ? iconColor : .clear, lineWidth: 2)
         )
     }
 
@@ -80,24 +80,9 @@ struct ThemeCardView: View {
         let firstWords = Array(theme.words.prefix(3)).joined(separator: ", ")
         return theme.words.count > 3 ? "\(firstWords)..." : firstWords
     }
-}
 
-extension ThemeCategory {
-    var systemImage: String {
-        switch self {
-        case .actualidad:
-            return "bolt.fill"
-        case .series:
-            return "sparkles.tv.fill"
-        case .general:
-            return "globe.europe.africa.fill"
-        case .custom:
-            return "slider.horizontal.3"
-        }
-    }
-
-    var tint: Color {
-        switch self {
+    private var iconColor: Color {
+        switch theme.category {
         case .actualidad:
             return .orange
         case .series:
@@ -109,8 +94,8 @@ extension ThemeCategory {
         }
     }
 
-    var gradientStart: Color {
-        switch self {
+    private var gradientStart: Color {
+        switch theme.category {
         case .actualidad:
             return .orange
         case .series:
@@ -122,8 +107,8 @@ extension ThemeCategory {
         }
     }
 
-    var gradientEnd: Color {
-        switch self {
+    private var gradientEnd: Color {
+        switch theme.category {
         case .actualidad:
             return .red
         case .series:
@@ -134,4 +119,15 @@ extension ThemeCategory {
             return .mint
         }
     }
+}
+
+#Preview {
+    ThemeCardView(
+        theme: Theme(
+            name: "Futbolistas top actuales",
+            words: ["Mbappé", "Vinicius Jr.", "Bellingham"],
+            category: .actualidad
+        )
+    )
+    .padding()
 }

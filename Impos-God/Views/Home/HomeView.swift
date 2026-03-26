@@ -5,7 +5,6 @@
 //  Created by Carlos Godoy Valverde on 26/3/26.
 //
 
-
 import SwiftUI
 import UIKit
 
@@ -14,7 +13,11 @@ struct HomeView: View {
         NavigationStack {
             ZStack {
                 LinearGradient(
-                    colors: [.purple.opacity(0.95), .blue.opacity(0.82), .black],
+                    colors: [
+                        Color(red: 0.09, green: 0.07, blue: 0.22),
+                        Color(red: 0.17, green: 0.12, blue: 0.42),
+                        Color(red: 0.05, green: 0.08, blue: 0.18)
+                    ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -23,15 +26,15 @@ struct HomeView: View {
                 VStack(spacing: 24) {
                     Spacer()
 
-                    if UIImage(named: "HomeLogo") != nil {
-                        Image("HomeLogo")
+                    if UIImage(named: "logo_baja") != nil {
+                        Image("logo_baja")
                             .resizable()
                             .scaledToFit()
-                            .frame(height: 110)
-                            .shadow(radius: 12)
+                            .frame(height: 120)
+                            .shadow(color: .black.opacity(0.25), radius: 14, x: 0, y: 8)
                     } else {
                         Image(systemName: "theatermasks.fill")
-                            .font(.system(size: 66))
+                            .font(.system(size: 64))
                             .foregroundStyle(.white)
                     }
 
@@ -97,13 +100,13 @@ private struct HomeButton: View {
         .frame(height: 60)
         .background(
             LinearGradient(
-                colors: [color.opacity(0.9), color.opacity(0.55)],
+                colors: [color.opacity(0.95), color.opacity(0.6)],
                 startPoint: .leading,
                 endPoint: .trailing
             )
         )
         .clipShape(RoundedRectangle(cornerRadius: 18))
-        .shadow(color: color.opacity(0.25), radius: 10, x: 0, y: 6)
+        .shadow(color: color.opacity(0.28), radius: 10, x: 0, y: 6)
     }
 }
 

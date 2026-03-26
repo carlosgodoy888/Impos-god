@@ -17,11 +17,11 @@ enum ImpostorHintStyle: String, CaseIterable, Identifiable, Codable {
     var helperText: String {
         switch self {
         case .themeOnly:
-            return "Solo revela la categoría general del tema."
+            return "Solo revela la categoría general."
         case .themeAndLength:
-            return "Muestra el tema y una longitud aproximada de la palabra."
+            return "Muestra el tema y una longitud aproximada."
         case .themeAndExample:
-            return "Muestra el tema y un ejemplo distinto dentro de ese mismo tema."
+            return "Muestra el tema y un ejemplo distinto."
         }
     }
 }
