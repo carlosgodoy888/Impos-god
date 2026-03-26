@@ -9,13 +9,92 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        NavigationStack {
+            ZStack {
+                LinearGradient(
+                    colors: [.purple.opacity(0.9), .blue.opacity(0.8), .black],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+
+                VStack(spacing: 24) {
+                    Spacer()
+
+                    VStack(spacing: 10) {
+                        Text("ImposGod")
+                            .font(.system(size: 40, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+
+                        Text("Prepara rondas de impostor de forma rápida, privada y divertida.")
+                            .font(.headline)
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.white.opacity(0.9))
+                            .padding(.horizontal)
+                    }
+
+                    Spacer()
+
+                    VStack(spacing: 16) {
+                        NavigationLink(destination: PlaceholderScreen(title: "Nueva partida")) {
+                            HomeButton(title: "Nueva partida", icon: "play.fill")
+                        }
+
+                        NavigationLink(destination: PlaceholderScreen(title: "Biblioteca de temas")) {
+                            HomeButton(title: "Biblioteca de temas", icon: "books.vertical.fill")
+                        }
+
+                        NavigationLink(destination: PlaceholderScreen(title: "Ajustes")) {
+                            HomeButton(title: "Ajustes", icon: "gearshape.fill")
+                        }
+                    }
+                    .padding(.horizontal, 24)
+
+                    Spacer()
+                }
+                .padding()
+            }
         }
-        .padding()
+    }
+}
+
+private struct HomeButton: View {
+    let title: String
+    let icon: String
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.title3)
+
+            Text(title)
+                .font(.headline)
+        }
+        .foregroundStyle(.white)
+        .frame(maxWidth: .infinity)
+        .frame(height: 58)
+        .background(.white.opacity(0.15))
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(.white.opacity(0.2), lineWidth: 1)
+        )
+    }
+}
+
+private struct PlaceholderScreen: View {
+    let title: String
+
+    var body: some View {
+        ZStack {
+            Color(.systemBackground)
+                .ignoresSafeArea()
+
+            Text(title)
+                .font(.title2.bold())
+        }
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
