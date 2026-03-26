@@ -15,8 +15,16 @@ struct SetupView: View {
     @State private var impostorsCount: Int = 1
     @State private var randomThemeEnabled: Bool = false
 
+    @State private var generatedSession: GameSession?
+    @State private var showAlert: Bool = false
+    @State private var alertMessage: String = ""
+
     var allowedImpostors: [Int] {
         playersCount <= 4 ? [1] : [1, 2]
+    }
+
+    private var selectedTheme: Theme? {
+        appViewModel.allThemes.first { $0.id == selectedThemeID }
     }
 
     var body: some View {
@@ -60,14 +68,58 @@ struct SetupView: View {
                 .foregroundStyle(.secondary)
             }
 
+            Section(header: Text("Resumen")) {
+                Text("Jugadores: \(playersCount)")
+                Text("Impostores: \(impostorsCount)")
+                Text(
+                    randomThemeEnabled
+                    ? "Tema: aleatorio"
+                    : "Tema: \(selectedTheme?.name ?? "sin seleccionar")"
+                )
+                .foregroundStyle(
+                    !randomThemeEnabled && selectedTheme == nil ? .red : .primary
+                )
+            }
+
             Section {
-                Button("Continuar") {
-                    print("Siguiente bloque: preparación de partida")
+                Button("Preparar reparto") {
+                    startGame()
                 }
             }
         }
         .navigationTitle("Nueva partida")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(item: $generatedSession) { session in
+            RevealFlowView(session: session)
+                .environmentObject(appViewModel)
+        }
+        .alert("No se puede iniciar la partida", isPresented: $showAlert) {
+            Button("Aceptar", role: .cancel) { }
+        } message: {
+            Text(alertMessage)
+        }
+    }
+
+    private func startGame() {
+        if !randomThemeEnabled && selectedTheme == nil {
+            alertMessage = "Selecciona un tema o activa la opción de tema aleatorio."
+            showAlert = true
+            return
+        }
+
+        guard let session = GameFactory.makeSession(
+            playersCount: playersCount,
+            impostorsCount: impostorsCount,
+            selectedTheme: selectedTheme,
+            allThemes: appViewModel.allThemes,
+            useRandomTheme: randomThemeEnabled
+        ) else {
+            alertMessage = "No se ha podido crear la partida. Revisa los datos e inténtalo de nuevo."
+            showAlert = true
+            return
+        }
+
+        generatedSession = session
     }
 }
 
