@@ -5,6 +5,7 @@
 //  Created by Carlos Godoy Valverde on 26/3/26.
 //
 
+
 import SwiftUI
 
 struct SetupView: View {
@@ -12,127 +13,123 @@ struct SetupView: View {
 
     @State private var selectedThemeID: UUID?
     @State private var playersCount: Int = 4
+    @State private var impostorsCount: Int = 1
     @State private var randomThemeEnabled: Bool = false
 
     @State private var generatedSession: GameSession?
     @State private var showAlert: Bool = false
     @State private var alertMessage: String = ""
 
-    private let gridColumns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 4)
-
-    private var resolvedImpostorsCount: Int {
-        playersCount > 5 ? 2 : 1
-    }
+    private let maxPlayers: Int = 20
 
     private var selectedTheme: Theme? {
         appViewModel.allThemes.first { $0.id == selectedThemeID }
+    }
+
+    private var allowedImpostors: [Int] {
+        playersCount > 5 ? [1, 2] : [1]
     }
 
     var body: some View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(red: 0.05, green: 0.05, blue: 0.12),
-                    Color(red: 0.13, green: 0.09, blue: 0.28),
-                    Color(red: 0.08, green: 0.13, blue: 0.22)
+                    Color(red: 0.08, green: 0.08, blue: 0.18),
+                    Color(red: 0.14, green: 0.10, blue: 0.32),
+                    Color(red: 0.08, green: 0.15, blue: 0.26)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: 18) {
-                    sectionCard(title: "Tema", icon: "sparkles") {
-                        Toggle("Tema aleatorio", isOn: $randomThemeEnabled)
+            Form {
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Configura la ronda")
+                            .font(.title3.bold())
+                            .foregroundStyle(.white)
 
-                        if randomThemeEnabled {
-                            Text("La app elegirá automáticamente un tema al empezar.")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                        } else {
-                            NavigationLink(destination: ThemePickerView(selectedThemeID: $selectedThemeID)) {
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        Text("Elegir tema")
-                                            .font(.headline)
-                                            .foregroundStyle(.primary)
-
-                                        Text(selectedTheme?.name ?? "Toca aquí para seleccionar uno")
-                                            .foregroundStyle(selectedTheme == nil ? .secondary : .primary)
-                                    }
-
-                                    Spacer()
-
-                                    Image(systemName: "chevron.right")
-                                        .foregroundStyle(.secondary)
-                                }
-                                .padding(.vertical, 6)
-                            }
-                        }
+                        Text("Elige el tema, ajusta jugadores e impostores y prepara el reparto.")
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.8))
                     }
+                    .padding(.vertical, 6)
+                    .listRowBackground(Color.white.opacity(0.08))
+                }
 
-                    sectionCard(title: "Jugadores", icon: "person.3.fill") {
-                        LazyVGrid(columns: gridColumns, spacing: 10) {
-                            ForEach(1...12, id: \.self) { count in
-                                ChoiceChip(
-                                    title: "\(count)",
-                                    isSelected: playersCount == count,
-                                    color: .blue
-                                ) {
-                                    playersCount = count
-                                }
-                            }
-                        }
-                    }
+                Section("Tema") {
+                    Toggle("Tema aleatorio", isOn: $randomThemeEnabled)
 
-                    sectionCard(title: "Impostores", icon: "person.fill.questionmark") {
-                        HStack {
-                            Text("Número asignado automáticamente")
-                                .foregroundStyle(.secondary)
-
-                            Spacer()
-
-                            Text("\(resolvedImpostorsCount)")
-                                .font(.title3.bold())
-                                .foregroundStyle(.orange)
-                        }
-
-                        Text(
-                            playersCount > 5
-                            ? "Con más de 5 jugadores habrá 2 impostores."
-                            : "Con 5 o menos jugadores habrá 1 impostor."
-                        )
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                    }
-
-                    sectionCard(title: "Configuración del impostor", icon: "wand.and.stars") {
-                        NavigationLink(destination: SettingsView()) {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Pista y visual del impostor")
+                    if !randomThemeEnabled {
+                        NavigationLink(destination: ThemePickerView(selectedThemeID: $selectedThemeID)) {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Elegir tema")
                                     .font(.headline)
 
-                                Text(
-                                    appViewModel.impostorHintsEnabled
-                                    ? "Pista activada: \(appViewModel.impostorHintStyle.rawValue)"
-                                    : "Pista desactivada"
-                                )
-                                .foregroundStyle(.secondary)
-
-                                Text("La carta usará las imágenes guardadas en Assets.")
-                                    .foregroundStyle(.secondary)
+                                Text(selectedTheme?.name ?? "Toca aquí para seleccionar un tema")
+                                    .foregroundStyle(selectedTheme == nil ? .secondary : .primary)
                             }
-                            .padding(.vertical, 6)
+                            .padding(.vertical, 4)
+                        }
+                    }
+                }
+
+                Section("Jugadores") {
+                    Stepper("Número de jugadores: \(playersCount)", value: $playersCount, in: 1...maxPlayers)
+
+                    Text("Puedes jugar hasta \(maxPlayers) jugadores.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+
+                Section("Impostores") {
+                    if playersCount > 5 {
+                        Picker("Número de impostores", selection: $impostorsCount) {
+                            ForEach(allowedImpostors, id: \.self) { count in
+                                Text("\(count)").tag(count)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    } else {
+                        HStack {
+                            Text("Número de impostores")
+                            Spacer()
+                            Text("1")
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.orange)
                         }
                     }
 
-                    sectionCard(title: "Resumen", icon: "checkmark.seal.fill") {
-                        summaryRow("Jugadores", value: "\(playersCount)")
-                        summaryRow("Impostores", value: "\(resolvedImpostorsCount)")
-                        summaryRow("Tema", value: randomThemeEnabled ? "Aleatorio" : (selectedTheme?.name ?? "Sin seleccionar"))
-                    }
+                    Text(playersCount > 5
+                         ? "Con más de 5 jugadores puedes elegir 1 o 2 impostores."
+                         : "Con 5 o menos jugadores la partida usa 1 impostor.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
 
+                Section("Pistas del impostor") {
+                    NavigationLink(destination: SettingsView()) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Configurar pistas")
+                                .font(.headline)
+
+                            Text(appViewModel.impostorHintsEnabled
+                                 ? "Modo actual: \(appViewModel.impostorHintStyle.rawValue)"
+                                 : "Actualmente desactivadas")
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+
+                Section("Resumen") {
+                    summaryRow("Jugadores", "\(playersCount)")
+                    summaryRow("Impostores", "\(impostorsCount)")
+                    summaryRow("Tema", randomThemeEnabled ? "Aleatorio" : (selectedTheme?.name ?? "Sin seleccionar"))
+                }
+
+                Section {
                     Button {
                         startGame()
                     } label: {
@@ -140,7 +137,7 @@ struct SetupView: View {
                             .font(.headline)
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 58)
+                            .frame(height: 50)
                             .background(
                                 LinearGradient(
                                     colors: [.blue, .purple],
@@ -148,11 +145,12 @@ struct SetupView: View {
                                     endPoint: .trailing
                                 )
                             )
-                            .clipShape(RoundedRectangle(cornerRadius: 18))
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
+                    .listRowBackground(Color.clear)
                 }
-                .padding()
             }
+            .scrollContentBackground(.hidden)
         }
         .navigationTitle("Nueva partida")
         .navigationBarTitleDisplayMode(.inline)
@@ -163,6 +161,11 @@ struct SetupView: View {
             Button("Aceptar", role: .cancel) { }
         } message: {
             Text(alertMessage)
+        }
+        .onChange(of: playersCount) { _, _ in
+            if !allowedImpostors.contains(impostorsCount) {
+                impostorsCount = allowedImpostors.first ?? 1
+            }
         }
     }
 
@@ -175,14 +178,14 @@ struct SetupView: View {
 
         guard let session = GameFactory.makeSession(
             playersCount: playersCount,
-            impostorsCount: resolvedImpostorsCount,
+            impostorsCount: impostorsCount,
             selectedTheme: selectedTheme,
             allThemes: appViewModel.allThemes,
             useRandomTheme: randomThemeEnabled,
             hintEnabled: appViewModel.impostorHintsEnabled,
             hintStyle: appViewModel.impostorHintStyle
         ) else {
-            alertMessage = "No se ha podido crear la partida. Revisa los datos e inténtalo de nuevo."
+            alertMessage = "No se ha podido crear la partida. Revisa la configuración e inténtalo otra vez."
             showAlert = true
             return
         }
@@ -190,58 +193,13 @@ struct SetupView: View {
         generatedSession = session
     }
 
-    private func sectionCard<Content: View>(
-        title: String,
-        icon: String,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 10) {
-                Image(systemName: icon)
-                    .foregroundStyle(.blue)
-
-                Text(title)
-                    .font(.title3.bold())
-            }
-
-            content()
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.white.opacity(0.95))
-        .clipShape(RoundedRectangle(cornerRadius: 22))
-    }
-
-    private func summaryRow(_ label: String, value: String) -> some View {
+    private func summaryRow(_ label: String, _ value: String) -> some View {
         HStack {
             Text(label)
-                .foregroundStyle(.secondary)
-
             Spacer()
-
             Text(value)
-                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
         }
-    }
-}
-
-private struct ChoiceChip: View {
-    let title: String
-    let isSelected: Bool
-    let color: Color
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.headline)
-                .foregroundStyle(isSelected ? .white : .primary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 46)
-                .background(isSelected ? color : Color.gray.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-        }
-        .buttonStyle(.plain)
     }
 }
 

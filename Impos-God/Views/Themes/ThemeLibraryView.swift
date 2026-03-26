@@ -31,54 +31,158 @@ struct ThemeLibraryView: View {
     }
 
     var body: some View {
-        List {
-            Section("Buscar") {
-                TextField("Buscar tema o palabra", text: $searchText)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-            }
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.06, green: 0.06, blue: 0.14),
+                    Color(red: 0.12, green: 0.10, blue: 0.26),
+                    Color(red: 0.08, green: 0.14, blue: 0.22)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
 
-            Section("Crear tema personalizado") {
-                TextField("Nombre del tema", text: $newThemeName)
-                TextField("Palabras separadas por comas", text: $newThemeWords)
+            List {
+                Section {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Buscar")
+                            .font(.title3.bold())
+                            .foregroundStyle(.white)
 
-                Button("Guardar tema") {
-                    appViewModel.addCustomTheme(name: newThemeName, wordsText: newThemeWords)
-                    newThemeName = ""
-                    newThemeWords = ""
+                        TextField("Buscar tema o palabra", text: $searchText)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .padding(12)
+                            .background(Color.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                    }
+                    .padding(.vertical, 6)
+                    .listRowBackground(Color.white.opacity(0.08))
                 }
-            }
 
-            Section("Temas disponibles") {
-                ForEach(filteredThemes, id: \.id) { theme in
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(theme.name)
-                            .font(.headline)
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Crear tema personalizado")
+                            .font(.title3.bold())
+                            .foregroundStyle(.white)
 
-                        Text(theme.words.prefix(3).joined(separator: ", "))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
+                        TextField("Nombre del tema", text: $newThemeName)
+                            .padding(12)
+                            .background(Color.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
 
-                        if theme.isCustom {
-                            Button(role: .destructive) {
-                                deleteTheme(theme)
-                            } label: {
-                                Label("Eliminar tema", systemImage: "trash")
-                            }
+                        TextField("Palabras separadas por comas", text: $newThemeWords)
+                            .padding(12)
+                            .background(Color.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+
+                        Button {
+                            appViewModel.addCustomTheme(name: newThemeName, wordsText: newThemeWords)
+                            newThemeName = ""
+                            newThemeWords = ""
+                        } label: {
+                            Text("Guardar tema")
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .background(
+                                    LinearGradient(
+                                        colors: [.green, .mint],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 14))
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 6)
+                    .listRowBackground(Color.white.opacity(0.08))
+                }
+
+                Section("Temas disponibles") {
+                    ForEach(filteredThemes, id: \.id) { theme in
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack(spacing: 12) {
+                                Image(systemName: iconName(for: theme.category))
+                                    .foregroundStyle(iconColor(for: theme.category))
+                                    .frame(width: 24)
+
+                                Text(theme.name)
+                                    .font(.headline)
+
+                                Spacer()
+
+                                Text(theme.category.rawValue)
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(iconColor(for: theme.category))
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 4)
+                                    .background(iconColor(for: theme.category).opacity(0.12))
+                                    .clipShape(Capsule())
+                            }
+
+                            Text(theme.words.prefix(4).joined(separator: ", "))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+
+                            if theme.isCustom {
+                                Button(role: .destructive) {
+                                    appViewModel.deleteCustomTheme(theme)
+                                } label: {
+                                    Label("Eliminar tema", systemImage: "trash")
+                                }
+                                .padding(.top, 4)
+                            }
+                        }
+                        .padding(14)
+                        .background(
+                            RoundedRectangle(cornerRadius: 18)
+                                .fill(iconColor(for: theme.category).opacity(0.10))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18)
+                                .stroke(iconColor(for: theme.category).opacity(0.20), lineWidth: 1)
+                        )
+                        .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                    }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .listStyle(.insetGrouped)
         }
         .navigationTitle("Biblioteca")
         .navigationBarTitleDisplayMode(.inline)
-        .listStyle(.insetGrouped)
     }
 
-    private func deleteTheme(_ theme: Theme) {
-        appViewModel.deleteCustomTheme(theme)
+    private func iconName(for category: ThemeCategory) -> String {
+        switch category {
+        case .actualidad:
+            return "bolt.fill"
+        case .series:
+            return "sparkles.tv.fill"
+        case .general:
+            return "globe.europe.africa.fill"
+        case .custom:
+            return "slider.horizontal.3"
+        }
+    }
+
+    private func iconColor(for category: ThemeCategory) -> Color {
+        switch category {
+        case .actualidad:
+            return .orange
+        case .series:
+            return .purple
+        case .general:
+            return .blue
+        case .custom:
+            return .green
+        }
     }
 }
 
@@ -88,3 +192,4 @@ struct ThemeLibraryView: View {
             .environmentObject(AppViewModel())
     }
 }
+
