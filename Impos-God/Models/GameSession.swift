@@ -13,19 +13,22 @@ struct GameSession: Identifiable, Hashable {
     let secretWord: String
     let playersCount: Int
     let impostorIndexes: Set<Int>
+    let impostorHintText: String?
 
     init(
         id: UUID = UUID(),
         themeName: String,
         secretWord: String,
         playersCount: Int,
-        impostorIndexes: Set<Int>
+        impostorIndexes: Set<Int>,
+        impostorHintText: String? = nil
     ) {
         self.id = id
         self.themeName = themeName
         self.secretWord = secretWord
         self.playersCount = playersCount
         self.impostorIndexes = impostorIndexes
+        self.impostorHintText = impostorHintText
     }
 
     func isImpostor(playerIndex: Int) -> Bool {

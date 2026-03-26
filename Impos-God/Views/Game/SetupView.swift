@@ -29,6 +29,17 @@ struct SetupView: View {
 
     var body: some View {
         Form {
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Configura la ronda")
+                        .font(.title3.bold())
+
+                    Text("Elige el tema, el número de jugadores, los impostores y revisa cómo está personalizada la carta del impostor.")
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 4)
+            }
+
             Section(header: Text("Tema")) {
                 Toggle("Tema aleatorio", isOn: $randomThemeEnabled)
 
@@ -53,6 +64,7 @@ struct SetupView: View {
                         Text("\(count)").tag(count)
                     }
                 }
+
                 .onChange(of: playersCount) { _, _ in
                     if !allowedImpostors.contains(impostorsCount) {
                         impostorsCount = allowedImpostors.first ?? 1
@@ -66,6 +78,30 @@ struct SetupView: View {
                 )
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+            }
+
+            Section(header: Text("Personalización del impostor")) {
+                NavigationLink(destination: SettingsView()) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Pista y carta del impostor")
+                            .font(.headline)
+
+                        Text(
+                            appViewModel.impostorHintsEnabled
+                            ? "Pista activada: \(appViewModel.impostorHintStyle.rawValue)"
+                            : "Pista desactivada"
+                        )
+                        .foregroundStyle(.secondary)
+
+                        Text(
+                            appViewModel.impostorImageData != nil
+                            ? "Foto personalizada cargada"
+                            : "Sin foto personalizada"
+                        )
+                        .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                }
             }
 
             Section(header: Text("Resumen")) {
@@ -112,7 +148,9 @@ struct SetupView: View {
             impostorsCount: impostorsCount,
             selectedTheme: selectedTheme,
             allThemes: appViewModel.allThemes,
-            useRandomTheme: randomThemeEnabled
+            useRandomTheme: randomThemeEnabled,
+            hintEnabled: appViewModel.impostorHintsEnabled,
+            hintStyle: appViewModel.impostorHintStyle
         ) else {
             alertMessage = "No se ha podido crear la partida. Revisa los datos e inténtalo de nuevo."
             showAlert = true

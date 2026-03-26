@@ -21,6 +21,13 @@ final class AppViewModel: ObservableObject {
 
     @Published var customThemes: [Theme] = []
     @Published var impostorImageData: Data?
+    @Published var impostorHintsEnabled: Bool = true
+    @Published var impostorHintStyle: ImpostorHintStyle = .themeAndExample
+
+    private let customThemesKey = "customThemes"
+    private let impostorImageKey = "impostorImageData"
+    private let impostorHintsEnabledKey = "impostorHintsEnabled"
+    private let impostorHintStyleKey = "impostorHintStyle"
 
     var allThemes: [Theme] {
         builtInThemes + customThemes
@@ -29,6 +36,7 @@ final class AppViewModel: ObservableObject {
     init() {
         loadCustomThemes()
         loadImpostorImage()
+        loadHintSettings()
     }
 
     func addCustomTheme(name: String, wordsText: String) {
@@ -56,20 +64,34 @@ final class AppViewModel: ObservableObject {
 
     func saveImpostorImage(data: Data?) {
         impostorImageData = data
-        UserDefaults.standard.set(data, forKey: "impostorImageData")
+        UserDefaults.standard.set(data, forKey: impostorImageKey)
+    }
+
+    func clearImpostorImage() {
+        saveImpostorImage(data: nil)
+    }
+
+    func setImpostorHintsEnabled(_ enabled: Bool) {
+        impostorHintsEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: impostorHintsEnabledKey)
+    }
+
+    func setImpostorHintStyle(_ style: ImpostorHintStyle) {
+        impostorHintStyle = style
+        UserDefaults.standard.set(style.rawValue, forKey: impostorHintStyleKey)
     }
 
     private func saveCustomThemes() {
         do {
             let data = try JSONEncoder().encode(customThemes)
-            UserDefaults.standard.set(data, forKey: "customThemes")
+            UserDefaults.standard.set(data, forKey: customThemesKey)
         } catch {
             print("Error guardando temas personalizados: \(error)")
         }
     }
 
     private func loadCustomThemes() {
-        guard let data = UserDefaults.standard.data(forKey: "customThemes") else { return }
+        guard let data = UserDefaults.standard.data(forKey: customThemesKey) else { return }
 
         do {
             customThemes = try JSONDecoder().decode([Theme].self, from: data)
@@ -79,6 +101,17 @@ final class AppViewModel: ObservableObject {
     }
 
     private func loadImpostorImage() {
-        impostorImageData = UserDefaults.standard.data(forKey: "impostorImageData")
+        impostorImageData = UserDefaults.standard.data(forKey: impostorImageKey)
+    }
+
+    private func loadHintSettings() {
+        if UserDefaults.standard.object(forKey: impostorHintsEnabledKey) != nil {
+            impostorHintsEnabled = UserDefaults.standard.bool(forKey: impostorHintsEnabledKey)
+        }
+
+        if let rawValue = UserDefaults.standard.string(forKey: impostorHintStyleKey),
+           let style = ImpostorHintStyle(rawValue: rawValue) {
+            impostorHintStyle = style
+        }
     }
 }

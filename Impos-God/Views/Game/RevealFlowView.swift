@@ -207,9 +207,31 @@ struct RevealFlowView: View {
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
 
-                Text("No recibirás palabra. Escucha al resto, improvisa y trata de no ser descubierto.")
+                Text("No recibirás la palabra exacta. Escucha bien, improvisa y trata de no ser descubierto.")
                     .foregroundStyle(.white.opacity(0.9))
                     .multilineTextAlignment(.center)
+
+                if let hint = session.impostorHintText {
+                    VStack(spacing: 10) {
+                        Text("Pista suave")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+
+                        Text(hint)
+                            .font(.body)
+                            .foregroundStyle(.white.opacity(0.92))
+                            .multilineTextAlignment(.center)
+
+                        Text("Te orienta un poco, pero no revela la respuesta exacta.")
+                            .font(.footnote)
+                            .foregroundStyle(.white.opacity(0.7))
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity)
+                    .background(.white.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                }
 
                 Text("No enseñes esta pantalla.")
                     .font(.footnote)
@@ -255,7 +277,8 @@ struct RevealFlowView: View {
                 themeName: "Fútbol",
                 secretWord: "Mbappé",
                 playersCount: 4,
-                impostorIndexes: [1]
+                impostorIndexes: [1],
+                impostorHintText: "Tema: Futbolistas top actuales\nEjemplo del tema: Bellingham"
             )
         )
         .environmentObject(AppViewModel())
