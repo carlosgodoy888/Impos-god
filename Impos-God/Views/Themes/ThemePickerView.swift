@@ -1,18 +1,17 @@
 //
-//  ThemeLibraryView.swift
+//  ThemePickerView.swift
 //  Impos-God
 //
 //  Created by Carlos Godoy Valverde on 26/3/26.
 //
 
-
 import SwiftUI
 
-struct ThemeLibraryView: View {
+struct ThemePickerView: View {
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var appViewModel: AppViewModel
 
-    @State private var newThemeName: String = ""
-    @State private var newThemeWords: String = ""
+    @Binding var selectedThemeID: UUID?
     @State private var searchText: String = ""
 
     private let orderedCategories: [ThemeCategory] = [.actualidad, .series, .general, .custom]
@@ -36,36 +35,22 @@ struct ThemeLibraryView: View {
 
     var body: some View {
         List {
-            Section("Crear tema personalizado") {
-                TextField("Nombre del tema", text: $newThemeName)
-                TextField("Palabras separadas por comas", text: $newThemeWords)
-
-                Button("Guardar tema") {
-                    appViewModel.addCustomTheme(name: newThemeName, wordsText: newThemeWords)
-                    newThemeName = ""
-                    newThemeWords = ""
-                }
-            }
-
             ForEach(orderedCategories) { category in
                 let themes = groupedThemes[category] ?? []
 
                 if !themes.isEmpty {
                     Section {
                         ForEach(themes) { theme in
-                            ThemeCardView(theme: theme)
-                                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
-                                .listRowBackground(Color.clear)
-                                .listRowSeparator(.hidden)
-                                .swipeActions {
-                                    if theme.isCustom {
-                                        Button(role: .destructive) {
-                                            appViewModel.deleteCustomTheme(theme)
-                                        } label: {
-                                            Label("Eliminar", systemImage: "trash")
-                                        }
-                                    }
-                                }
+                            ThemeCardView(
+                                theme: theme,
+                                isSelected: selectedThemeID == theme.id
+                            ) {
+                                selectedThemeID = theme.id
+                                dismiss()
+                            }
+                            .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
                         }
                     } header: {
                         Label(category.rawValue, systemImage: category.systemImage)
@@ -74,7 +59,7 @@ struct ThemeLibraryView: View {
             }
         }
         .searchable(text: $searchText, prompt: "Buscar tema o palabra")
-        .navigationTitle("Biblioteca")
+        .navigationTitle("Elegir tema")
         .navigationBarTitleDisplayMode(.inline)
         .listStyle(.insetGrouped)
     }
@@ -82,7 +67,7 @@ struct ThemeLibraryView: View {
 
 #Preview {
     NavigationStack {
-        ThemeLibraryView()
+        ThemePickerView(selectedThemeID: .constant(nil))
             .environmentObject(AppViewModel())
     }
 }

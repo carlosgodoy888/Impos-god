@@ -5,12 +5,12 @@
 //  Created by Carlos Godoy Valverde on 26/3/26.
 //
 
+
 import SwiftUI
 import UIKit
 
 struct RevealFlowView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var appViewModel: AppViewModel
 
     let session: GameSession
 
@@ -126,20 +126,10 @@ struct RevealFlowView: View {
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
 
-                    Text("Ahora empezad a hablar del tema sin decir la palabra exacta y descubrid quién es el impostor.")
+                    Text("Ahora empezad a hablar, dad pistas sin decir la palabra exacta y descubrid quién es el impostor.")
                         .foregroundStyle(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
                 }
-            }
-
-            VStack(spacing: 12) {
-                Text("Tema elegido: \(session.themeName)")
-                    .font(.headline)
-                    .foregroundStyle(.white.opacity(0.95))
-
-                Text("La palabra no se muestra aquí para no estropear la ronda.")
-                    .font(.footnote)
-                    .foregroundStyle(.white.opacity(0.75))
             }
 
             Button {
@@ -185,30 +175,37 @@ struct RevealFlowView: View {
     }
 
     private var impostorCard: some View {
-        roundedPanel {
-            VStack(spacing: 18) {
-                if let data = appViewModel.impostorImageData,
-                   let image = UIImage(data: data) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(height: 220)
-                        .frame(maxWidth: .infinity)
-                        .clipped()
-                        .clipShape(RoundedRectangle(cornerRadius: 18))
-                } else {
-                    Image(systemName: "person.fill.questionmark")
-                        .font(.system(size: 52))
-                        .foregroundStyle(.red)
-                }
+        ZStack(alignment: .bottom) {
+            if let image = UIImage(named: "ImpostorCardBackground") {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(height: 430)
+                    .frame(maxWidth: .infinity)
+                    .clipped()
+            } else {
+                LinearGradient(
+                    colors: [.red.opacity(0.9), .black],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 430)
+            }
 
-                Text("Eres el impostor")
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
+            LinearGradient(
+                colors: [.clear, .black.opacity(0.25), .black.opacity(0.8)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            VStack(spacing: 16) {
+                Text("ERES EL IMPOSTOR")
+                    .font(.system(size: 30, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
 
-                Text("No recibirás la palabra exacta. Escucha bien, improvisa y trata de no ser descubierto.")
-                    .foregroundStyle(.white.opacity(0.9))
+                Text("No conoces la palabra exacta. Escucha bien al resto e improvisa.")
+                    .foregroundStyle(.white.opacity(0.95))
                     .multilineTextAlignment(.center)
 
                 if let hint = session.impostorHintText {
@@ -218,26 +215,27 @@ struct RevealFlowView: View {
                             .foregroundStyle(.white)
 
                         Text(hint)
-                            .font(.body)
-                            .foregroundStyle(.white.opacity(0.92))
-                            .multilineTextAlignment(.center)
-
-                        Text("Te orienta un poco, pero no revela la respuesta exacta.")
-                            .font(.footnote)
-                            .foregroundStyle(.white.opacity(0.7))
+                            .foregroundStyle(.white.opacity(0.95))
                             .multilineTextAlignment(.center)
                     }
-                    .padding(16)
+                    .padding(14)
                     .frame(maxWidth: .infinity)
-                    .background(.white.opacity(0.08))
-                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .background(.black.opacity(0.35))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
 
                 Text("No enseñes esta pantalla.")
                     .font(.footnote)
-                    .foregroundStyle(.white.opacity(0.75))
+                    .foregroundStyle(.white.opacity(0.78))
             }
+            .padding(22)
         }
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(.white.opacity(0.16), lineWidth: 1)
+        )
     }
 
     private func roundedPanel<Content: View>(@ViewBuilder content: () -> Content) -> some View {
@@ -278,9 +276,8 @@ struct RevealFlowView: View {
                 secretWord: "Mbappé",
                 playersCount: 4,
                 impostorIndexes: [1],
-                impostorHintText: "Tema: Futbolistas top actuales\nEjemplo del tema: Bellingham"
+                impostorHintText: "Tema: Futbolistas top actuales"
             )
         )
-        .environmentObject(AppViewModel())
     }
 }
