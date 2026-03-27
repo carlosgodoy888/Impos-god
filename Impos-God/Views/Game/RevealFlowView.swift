@@ -136,11 +136,16 @@ struct RevealFlowView: View {
                 }
             }
 
+            Text("Empieza: Jugador \(session.startingPlayerIndex + 1)")
+                .font(.title3.weight(.bold))
+                .foregroundStyle(.white)
+
             Button {
                 dismiss()
             } label: {
                 primaryButtonLabel("Cerrar partida")
             }
+        
         }
     }
 

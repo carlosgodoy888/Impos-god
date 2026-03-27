@@ -6,6 +6,7 @@
 //
 
 
+
 import SwiftUI
 
 struct ThemeLibraryView: View {
@@ -53,8 +54,9 @@ struct ThemeLibraryView: View {
                         TextField("Buscar tema o palabra", text: $searchText)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
+                            .foregroundStyle(.white)
                             .padding(12)
-                            .background(Color.white)
+                            .background(Color.white.opacity(0.12))
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
                     .padding(.vertical, 6)
@@ -68,13 +70,15 @@ struct ThemeLibraryView: View {
                             .foregroundStyle(.white)
 
                         TextField("Nombre del tema", text: $newThemeName)
+                            .foregroundStyle(.white)
                             .padding(12)
-                            .background(Color.white)
+                            .background(Color.white.opacity(0.12))
                             .clipShape(RoundedRectangle(cornerRadius: 14))
 
                         TextField("Palabras separadas por comas", text: $newThemeWords)
+                            .foregroundStyle(.white)
                             .padding(12)
-                            .background(Color.white)
+                            .background(Color.white.opacity(0.12))
                             .clipShape(RoundedRectangle(cornerRadius: 14))
 
                         Button {
@@ -101,7 +105,7 @@ struct ThemeLibraryView: View {
                     .listRowBackground(Color.white.opacity(0.08))
                 }
 
-                Section("Temas disponibles") {
+                Section {
                     ForEach(filteredThemes, id: \.id) { theme in
                         VStack(alignment: .leading, spacing: 10) {
                             HStack(spacing: 12) {
@@ -111,21 +115,22 @@ struct ThemeLibraryView: View {
 
                                 Text(theme.name)
                                     .font(.headline)
+                                    .foregroundStyle(.white)
 
                                 Spacer()
 
                                 Text(theme.category.rawValue)
                                     .font(.caption.weight(.semibold))
-                                    .foregroundStyle(iconColor(for: theme.category))
+                                    .foregroundStyle(.white)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 4)
-                                    .background(iconColor(for: theme.category).opacity(0.12))
+                                    .background(iconColor(for: theme.category).opacity(0.25))
                                     .clipShape(Capsule())
                             }
 
                             Text(theme.words.prefix(4).joined(separator: ", "))
                                 .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.white.opacity(0.75))
                                 .lineLimit(2)
 
                             if theme.isCustom {
@@ -140,16 +145,19 @@ struct ThemeLibraryView: View {
                         .padding(14)
                         .background(
                             RoundedRectangle(cornerRadius: 18)
-                                .fill(iconColor(for: theme.category).opacity(0.10))
+                                .fill(Color.white.opacity(0.08))
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 18)
-                                .stroke(iconColor(for: theme.category).opacity(0.20), lineWidth: 1)
+                                .stroke(iconColor(for: theme.category).opacity(0.18), lineWidth: 1)
                         )
                         .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
                     }
+                } header: {
+                    Text("Temas disponibles")
+                        .foregroundStyle(.white)
                 }
             }
             .scrollContentBackground(.hidden)
@@ -192,4 +200,3 @@ struct ThemeLibraryView: View {
             .environmentObject(AppViewModel())
     }
 }
-

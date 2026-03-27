@@ -13,6 +13,7 @@ struct GameSession: Identifiable, Hashable {
     let secretWord: String
     let playersCount: Int
     let impostorIndexes: Set<Int>
+    let startingPlayerIndex: Int
     let impostorHintText: String?
 
     init(
@@ -21,6 +22,7 @@ struct GameSession: Identifiable, Hashable {
         secretWord: String,
         playersCount: Int,
         impostorIndexes: Set<Int>,
+        startingPlayerIndex: Int = 0,
         impostorHintText: String? = nil
     ) {
         self.id = id
@@ -28,6 +30,7 @@ struct GameSession: Identifiable, Hashable {
         self.secretWord = secretWord
         self.playersCount = playersCount
         self.impostorIndexes = impostorIndexes
+        self.startingPlayerIndex = startingPlayerIndex
         self.impostorHintText = impostorHintText
     }
 

@@ -6,24 +6,24 @@
 //
 
 
+
 import SwiftUI
 
 struct SetupView: View {
     @EnvironmentObject var appViewModel: AppViewModel
 
-    @State private var selectedThemeID: UUID?
+    @State private var selectedThemeIDs: Set<UUID> = []
     @State private var playersCount: Int = 4
     @State private var impostorsCount: Int = 1
-    @State private var randomThemeEnabled: Bool = false
 
     @State private var generatedSession: GameSession?
     @State private var showAlert: Bool = false
     @State private var alertMessage: String = ""
 
-    private let maxPlayers: Int = 20
+    private let maxPlayers: Int = 24
 
-    private var selectedTheme: Theme? {
-        appViewModel.allThemes.first { $0.id == selectedThemeID }
+    private var selectedThemes: [Theme] {
+        appViewModel.allThemes.filter { selectedThemeIDs.contains($0.id) }
     }
 
     private var allowedImpostors: [Int] {
@@ -50,7 +50,7 @@ struct SetupView: View {
                             .font(.title3.bold())
                             .foregroundStyle(.white)
 
-                        Text("Elige el tema, ajusta jugadores e impostores y prepara el reparto.")
+                        Text("La app elegirá aleatoriamente el jugador inicial, el impostor y el tema dentro de los temas que marques.")
                             .font(.subheadline)
                             .foregroundStyle(.white.opacity(0.8))
                     }
@@ -58,21 +58,23 @@ struct SetupView: View {
                     .listRowBackground(Color.white.opacity(0.08))
                 }
 
-                Section("Tema") {
-                    Toggle("Tema aleatorio", isOn: $randomThemeEnabled)
+                Section("Temas") {
+                    NavigationLink(destination: ThemeMultiPickerView(selectedThemeIDs: $selectedThemeIDs)) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Elegir temas para esta partida")
+                                .font(.headline)
 
-                    if !randomThemeEnabled {
-                        NavigationLink(destination: ThemePickerView(selectedThemeID: $selectedThemeID)) {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("Elegir tema")
-                                    .font(.headline)
-
-                                Text(selectedTheme?.name ?? "Toca aquí para seleccionar un tema")
-                                    .foregroundStyle(selectedTheme == nil ? .secondary : .primary)
-                            }
-                            .padding(.vertical, 4)
+                            Text(selectedThemeIDs.isEmpty
+                                 ? "Toca aquí para seleccionar uno o varios"
+                                 : "\(selectedThemeIDs.count) tema(s) seleccionados")
+                                .foregroundStyle(selectedThemeIDs.isEmpty ? .secondary : .primary)
                         }
+                        .padding(.vertical, 4)
                     }
+
+                    Text("La partida sacará un tema aleatorio solo dentro de esta selección.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
 
                 Section("Jugadores") {
@@ -126,7 +128,7 @@ struct SetupView: View {
                 Section("Resumen") {
                     summaryRow("Jugadores", "\(playersCount)")
                     summaryRow("Impostores", "\(impostorsCount)")
-                    summaryRow("Tema", randomThemeEnabled ? "Aleatorio" : (selectedTheme?.name ?? "Sin seleccionar"))
+                    summaryRow("Temas marcados", "\(selectedThemeIDs.count)")
                 }
 
                 Section {
@@ -170,8 +172,8 @@ struct SetupView: View {
     }
 
     private func startGame() {
-        if !randomThemeEnabled && selectedTheme == nil {
-            alertMessage = "Selecciona un tema o activa la opción de tema aleatorio."
+        if selectedThemeIDs.isEmpty {
+            alertMessage = "Selecciona al menos un tema para la partida."
             showAlert = true
             return
         }
@@ -179,9 +181,7 @@ struct SetupView: View {
         guard let session = GameFactory.makeSession(
             playersCount: playersCount,
             impostorsCount: impostorsCount,
-            selectedTheme: selectedTheme,
-            allThemes: appViewModel.allThemes,
-            useRandomTheme: randomThemeEnabled,
+            selectedThemes: selectedThemes,
             hintEnabled: appViewModel.impostorHintsEnabled,
             hintStyle: appViewModel.impostorHintStyle
         ) else {

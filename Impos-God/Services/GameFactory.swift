@@ -12,35 +12,31 @@ enum GameFactory {
     static func makeSession(
         playersCount: Int,
         impostorsCount: Int,
-        selectedTheme: Theme?,
-        allThemes: [Theme],
-        useRandomTheme: Bool,
+        selectedThemes: [Theme],
         hintEnabled: Bool,
         hintStyle: ImpostorHintStyle
     ) -> GameSession? {
-        let chosenTheme: Theme?
+        guard playersCount > 0 else { return nil }
+        guard !selectedThemes.isEmpty else { return nil }
 
-        if useRandomTheme {
-            chosenTheme = allThemes.randomElement()
-        } else {
-            chosenTheme = selectedTheme
+        guard let chosenTheme = selectedThemes.randomElement(),
+              let chosenWord = chosenTheme.words.randomElement() else {
+            return nil
         }
 
-        guard let theme = chosenTheme else { return nil }
-        guard let word = theme.words.randomElement() else { return nil }
-        guard playersCount > 0 else { return nil }
+        let startingPlayerIndex = Int.random(in: 0..<playersCount)
 
         let safeImpostorsCount = max(1, min(impostorsCount, playersCount))
-        let randomIndexes = Array(0..<playersCount).shuffled().prefix(safeImpostorsCount)
-        let impostorIndexes = Set(randomIndexes)
+        let impostorIndexes = Set(Array(0..<playersCount).shuffled().prefix(safeImpostorsCount))
 
-        let hintText = hintEnabled ? makeHint(for: theme, style: hintStyle) : nil
+        let hintText = hintEnabled ? makeHint(for: chosenTheme, style: hintStyle) : nil
 
         return GameSession(
-            themeName: theme.name,
-            secretWord: word,
+            themeName: chosenTheme.name,
+            secretWord: chosenWord,
             playersCount: playersCount,
             impostorIndexes: impostorIndexes,
+            startingPlayerIndex: startingPlayerIndex,
             impostorHintText: hintText
         )
     }
@@ -74,23 +70,22 @@ enum GameFactory {
     private static func elementHint(for theme: Theme) -> String {
         let name = normalized(theme.name)
 
-        if name.contains("personajes") || name.contains("villanos") || name.contains("superheroes") {
+        if name.contains("personajes") || name.contains("villanos") || name.contains("superhéroes") || name.contains("superheroes") {
             return "Es un personaje."
         }
 
         if name.contains("actores") || name.contains("actrices") || name.contains("cantantes") ||
             name.contains("streamers") || name.contains("youtubers") || name.contains("influencers") ||
             name.contains("tenistas") || name.contains("luchadores") || name.contains("futbolistas") ||
-            name.contains("politica") || name.contains("politicos") || name.contains("f1 2026") ||
-            name.contains("nba actual") || name.contains("ufc") {
+            name.contains("política") || name.contains("politica") {
             return "Es una persona."
         }
 
-        if name.contains("clubes") || name.contains("escuderias") {
+        if name.contains("clubes") || name.contains("escuderías") || name.contains("escuderias") {
             return "Es un equipo o una entidad."
         }
 
-        if name.contains("ciudades") || name.contains("paises") || name.contains("monumentos") {
+        if name.contains("ciudades") || name.contains("países") || name.contains("paises") || name.contains("monumentos") {
             return "Es un lugar."
         }
 
@@ -112,11 +107,6 @@ enum GameFactory {
 
         if name.contains("memes") {
             return "Es algo viral de internet."
-        }
-
-        if name.contains("minecraft") || name.contains("call of duty") || name.contains("gta") ||
-            name.contains("ea sports") || name.contains("fortnite") {
-            return "Está relacionado con videojuegos."
         }
 
         return "Es algo muy reconocible dentro del tema."
