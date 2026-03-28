@@ -5,111 +5,170 @@
 //  Created by Carlos Godoy Valverde on 26/3/26.
 //
 
+
 import SwiftUI
 import UIKit
 
 struct HomeView: View {
+    @EnvironmentObject var appViewModel: AppViewModel
+
+    private var theme: AppTheme {
+        AppTheme.make(for: appViewModel.appearanceMode)
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.09, green: 0.07, blue: 0.22),
-                        Color(red: 0.17, green: 0.12, blue: 0.42),
-                        Color(red: 0.05, green: 0.08, blue: 0.18)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                theme.backgroundGradient
+                    .ignoresSafeArea()
 
                 VStack(spacing: 24) {
-                    Spacer()
+                    Spacer(minLength: 20)
 
-                    if UIImage(named: "logo_baja") != nil {
-                        Image("logo_baja")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: 120)
-                            .shadow(color: .black.opacity(0.25), radius: 14, x: 0, y: 8)
-                    } else {
-                        Image(systemName: "theatermasks.fill")
-                            .font(.system(size: 64))
-                            .foregroundStyle(.white)
-                    }
+                    logoSection
 
-                    VStack(spacing: 10) {
-                        Text("ImposGod")
-                            .font(.system(size: 38, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
+                    titleSection
 
-                        Text("Prepara rondas privadas, rápidas y mucho más divertidas.")
-                            .font(.headline)
-                            .multilineTextAlignment(.center)
-                            .foregroundStyle(.white.opacity(0.9))
-                            .padding(.horizontal)
-                    }
+                    Spacer(minLength: 10)
 
-                    Spacer()
-
-                    VStack(spacing: 16) {
-                        NavigationLink(destination: SetupView()) {
-                            HomeButton(title: "Nueva partida", icon: "play.fill", color: .blue)
-                        }
-
-                        NavigationLink(destination: ThemeLibraryView()) {
-                            HomeButton(title: "Biblioteca de temas", icon: "books.vertical.fill", color: .purple)
-                        }
-
-                        NavigationLink(destination: SettingsView()) {
-                            HomeButton(title: "Ajustes", icon: "gearshape.fill", color: .orange)
-                        }
-                    }
-                    .padding(.horizontal, 24)
+                    actionsSection
 
                     Spacer()
                 }
-                .padding()
+                .padding(.horizontal, 24)
+                .padding(.vertical, 20)
             }
         }
     }
 }
 
-private struct HomeButton: View {
+// MARK: - Bloques principales
+private extension HomeView {
+    var logoSection: some View {
+        Group {
+            if UIImage(named: "logo_baja") != nil {
+                Image("logo_baja")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 120)
+                    .shadow(color: theme.shadowColor, radius: 14, x: 0, y: 8)
+            } else {
+                Image(systemName: "theatermasks.fill")
+                    .font(.system(size: 70))
+                    .foregroundStyle(theme.primaryText)
+                    .padding(22)
+                    .background(theme.cardBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 24))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 24)
+                            .stroke(theme.cardBorder, lineWidth: 1)
+                    )
+            }
+        }
+    }
+
+    var titleSection: some View {
+        VStack(spacing: 10) {
+            Text("ImposGod")
+                .font(.system(size: 38, weight: .bold, design: .rounded))
+                .foregroundStyle(theme.primaryText)
+
+            Text("Prepara rondas privadas, rápidas y mucho más divertidas.")
+                .font(.headline)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(theme.secondaryText)
+                .padding(.horizontal, 8)
+        }
+    }
+
+    var actionsSection: some View {
+        VStack(spacing: 16) {
+            NavigationLink(destination: SetupView()) {
+                HomeActionButton(
+                    title: "Nueva partida",
+                    subtitle: "Configura la ronda y prepara el reparto",
+                    icon: "play.fill",
+                    accent: theme.primaryAccent,
+                    theme: theme
+                )
+            }
+            .buttonStyle(.plain)
+
+            NavigationLink(destination: ThemeLibraryView()) {
+                HomeActionButton(
+                    title: "Biblioteca de temas",
+                    subtitle: "Consulta y crea temas para jugar",
+                    icon: "books.vertical.fill",
+                    accent: theme.secondaryAccent,
+                    theme: theme
+                )
+            }
+            .buttonStyle(.plain)
+
+            NavigationLink(destination: SettingsView()) {
+                HomeActionButton(
+                    title: "Ajustes",
+                    subtitle: "Pistas, apariencia y configuración general",
+                    icon: "gearshape.fill",
+                    accent: .orange,
+                    theme: theme
+                )
+            }
+            .buttonStyle(.plain)
+        }
+    }
+}
+
+// MARK: - Botón principal del Home
+private struct HomeActionButton: View {
     let title: String
+    let subtitle: String
     let icon: String
-    let color: Color
+    let accent: Color
+    let theme: AppTheme
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.title3)
+        HStack(spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(accent.opacity(0.18))
+                    .frame(width: 46, height: 46)
 
-            Text(title)
-                .font(.headline)
+                Image(systemName: icon)
+                    .font(.headline)
+                    .foregroundStyle(accent)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(theme.primaryText)
+
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(theme.secondaryText)
+                    .lineLimit(2)
+            }
 
             Spacer()
 
             Image(systemName: "chevron.right")
                 .font(.footnote.weight(.bold))
-                .opacity(0.8)
+                .foregroundStyle(theme.tertiaryText)
         }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 18)
+        .padding(16)
         .frame(maxWidth: .infinity)
-        .frame(height: 60)
-        .background(
-            LinearGradient(
-                colors: [color.opacity(0.95), color.opacity(0.6)],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
+        .background(theme.cardBackground)
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 18))
-        .shadow(color: color.opacity(0.28), radius: 10, x: 0, y: 6)
+        .shadow(color: theme.shadowColor, radius: 8, x: 0, y: 4)
     }
 }
 
 #Preview {
     HomeView()
+        .environmentObject(AppViewModel())
 }
