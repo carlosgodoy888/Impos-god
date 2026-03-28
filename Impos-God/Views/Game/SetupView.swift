@@ -13,8 +13,8 @@ struct SetupView: View {
     // MARK: - Modos de selección de tema
     enum ThemeSelectionMode: String, CaseIterable, Identifiable {
         case single = "Manual"
-        case selectedRandom = "Aleatorio entre seleccionados"
-        case allRandom = "Aleatorio entre todos"
+        case selectedRandom = "Aleatorio seleccionados"
+        case allRandom = "Aleatorio total"
 
         var id: String { rawValue }
 
@@ -25,7 +25,7 @@ struct SetupView: View {
             case .selectedRandom:
                 return "Marcas varios temas y la app escoge uno al azar entre ellos."
             case .allRandom:
-                return "La app puede escoger aleatoriamente entre todos los temas disponibles."
+                return "La app escoge aleatoriamente entre todos los temas disponibles."
             }
         }
     }
@@ -44,7 +44,12 @@ struct SetupView: View {
 
     private let maxPlayers: Int = 24
 
-    // MARK: - Computadas
+    // MARK: - Tema visual actual
+    private var theme: AppTheme {
+        AppTheme.make(for: appViewModel.appearanceMode)
+    }
+
+    // MARK: - Datos derivados
     private var selectedSingleTheme: Theme? {
         appViewModel.allThemes.first { $0.id == selectedSingleThemeID }
     }
@@ -57,8 +62,6 @@ struct SetupView: View {
         playersCount > 5 ? [1, 2] : [1]
     }
 
-    /// Esta lista es la que realmente se envía al GameFactory.
-    /// Así no rompemos la lógica ya existente.
     private var themesForMatch: [Theme] {
         switch themeMode {
         case .single:
@@ -77,7 +80,8 @@ struct SetupView: View {
 
     var body: some View {
         ZStack {
-            backgroundGradient
+            theme.backgroundGradient
+                .ignoresSafeArea()
 
             Form {
                 introSection
@@ -115,15 +119,15 @@ private extension SetupView {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Configura la ronda")
                     .font(.title2.bold())
-                    .foregroundStyle(.white)
+                    .foregroundStyle(theme.primaryText)
 
                 Text("Elige cómo quieres gestionar el tema, define jugadores e impostores y prepara el reparto.")
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.78))
+                    .foregroundStyle(theme.secondaryText)
             }
             .padding(.vertical, 8)
         }
-        .listRowBackground(Color.white.opacity(0.08))
+        .listRowBackground(theme.sectionBackground)
     }
 
     var themeModeSection: some View {
@@ -140,7 +144,7 @@ private extension SetupView {
 
                 Text(themeMode.descriptionText)
                     .font(.footnote)
-                    .foregroundStyle(.white.opacity(0.75))
+                    .foregroundStyle(theme.tertiaryText)
 
                 switch themeMode {
                 case .single:
@@ -148,7 +152,7 @@ private extension SetupView {
                         selectionCard(
                             title: "Elegir tema manual",
                             subtitle: selectedSingleTheme?.name ?? "Toca aquí para seleccionar un único tema",
-                            accent: .blue
+                            accent: theme.primaryAccent
                         )
                     }
 
@@ -159,7 +163,7 @@ private extension SetupView {
                             subtitle: selectedThemeIDs.isEmpty
                                 ? "Toca aquí para seleccionar varios temas"
                                 : "\(selectedThemeIDs.count) tema(s) seleccionados",
-                            accent: .purple
+                            accent: theme.secondaryAccent
                         )
                     }
 
@@ -167,13 +171,13 @@ private extension SetupView {
                     infoCard(
                         title: "Modo aleatorio total",
                         subtitle: "La app podrá escoger cualquier tema disponible de toda tu biblioteca.",
-                        accent: .green
+                        accent: theme.successAccent
                     )
                 }
             }
             .padding(.vertical, 8)
         }
-        .listRowBackground(Color.white.opacity(0.08))
+        .listRowBackground(theme.sectionBackground)
     }
 
     var playersSection: some View {
@@ -182,14 +186,15 @@ private extension SetupView {
                 sectionTitle("Jugadores", icon: "person.3.fill")
 
                 Stepper("Número de jugadores: \(playersCount)", value: $playersCount, in: 1...maxPlayers)
+                    .foregroundStyle(theme.primaryText)
 
                 Text("Puedes jugar hasta \(maxPlayers) jugadores.")
                     .font(.footnote)
-                    .foregroundStyle(.white.opacity(0.75))
+                    .foregroundStyle(theme.tertiaryText)
             }
             .padding(.vertical, 8)
         }
-        .listRowBackground(Color.white.opacity(0.08))
+        .listRowBackground(theme.sectionBackground)
     }
 
     var impostorsSection: some View {
@@ -207,8 +212,10 @@ private extension SetupView {
                 } else {
                     HStack {
                         Text("Número de impostores")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(theme.primaryText)
+
                         Spacer()
+
                         Text("1")
                             .fontWeight(.bold)
                             .foregroundStyle(.orange)
@@ -219,11 +226,11 @@ private extension SetupView {
                      ? "Con más de 5 jugadores puedes elegir 1 o 2 impostores."
                      : "Con 5 o menos jugadores la partida usa 1 impostor.")
                     .font(.footnote)
-                    .foregroundStyle(.white.opacity(0.75))
+                    .foregroundStyle(theme.tertiaryText)
             }
             .padding(.vertical, 8)
         }
-        .listRowBackground(Color.white.opacity(0.08))
+        .listRowBackground(theme.sectionBackground)
     }
 
     var hintsSection: some View {
@@ -243,7 +250,7 @@ private extension SetupView {
             }
             .padding(.vertical, 8)
         }
-        .listRowBackground(Color.white.opacity(0.08))
+        .listRowBackground(theme.sectionBackground)
     }
 
     var summarySection: some View {
@@ -268,7 +275,7 @@ private extension SetupView {
             }
             .padding(.vertical, 8)
         }
-        .listRowBackground(Color.white.opacity(0.08))
+        .listRowBackground(theme.sectionBackground)
     }
 
     var startButtonSection: some View {
@@ -283,7 +290,7 @@ private extension SetupView {
                     .frame(height: 52)
                     .background(
                         LinearGradient(
-                            colors: [.blue, .purple],
+                            colors: [theme.primaryAccent, theme.secondaryAccent],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -297,34 +304,21 @@ private extension SetupView {
 
 // MARK: - Helpers visuales
 private extension SetupView {
-    var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                Color(red: 0.08, green: 0.08, blue: 0.18),
-                Color(red: 0.14, green: 0.10, blue: 0.32),
-                Color(red: 0.08, green: 0.15, blue: 0.26)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-        .ignoresSafeArea()
-    }
-
     func sectionTitle(_ text: String, icon: String) -> some View {
         HStack(spacing: 10) {
             Image(systemName: icon)
-                .foregroundStyle(.white)
+                .foregroundStyle(theme.primaryText)
 
             Text(text)
                 .font(.title3.bold())
-                .foregroundStyle(.white)
+                .foregroundStyle(theme.primaryText)
         }
     }
 
     func selectionCard(title: String, subtitle: String, accent: Color) -> some View {
         HStack(spacing: 12) {
             Circle()
-                .fill(accent.opacity(0.22))
+                .fill(accent.opacity(0.18))
                 .frame(width: 38, height: 38)
                 .overlay(
                     Image(systemName: "arrow.right.circle.fill")
@@ -334,21 +328,21 @@ private extension SetupView {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(theme.primaryText)
 
                 Text(subtitle)
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.75))
+                    .foregroundStyle(theme.secondaryText)
                     .lineLimit(2)
             }
 
             Spacer()
         }
         .padding(12)
-        .background(Color.white.opacity(0.08))
+        .background(theme.cardBackground)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 14))
     }
@@ -356,7 +350,7 @@ private extension SetupView {
     func infoCard(title: String, subtitle: String, accent: Color) -> some View {
         HStack(spacing: 12) {
             Circle()
-                .fill(accent.opacity(0.22))
+                .fill(accent.opacity(0.18))
                 .frame(width: 38, height: 38)
                 .overlay(
                     Image(systemName: "dice.fill")
@@ -366,21 +360,21 @@ private extension SetupView {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(theme.primaryText)
 
                 Text(subtitle)
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.75))
+                    .foregroundStyle(theme.secondaryText)
                     .lineLimit(3)
             }
 
             Spacer()
         }
         .padding(12)
-        .background(Color.white.opacity(0.08))
+        .background(theme.cardBackground)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(theme.cardBorder, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 14))
     }
@@ -388,12 +382,12 @@ private extension SetupView {
     func summaryRow(_ label: String, _ value: String) -> some View {
         HStack {
             Text(label)
-                .foregroundStyle(.white.opacity(0.82))
+                .foregroundStyle(theme.secondaryText)
 
             Spacer()
 
             Text(value)
-                .foregroundStyle(.white)
+                .foregroundStyle(theme.primaryText)
                 .fontWeight(.semibold)
                 .multilineTextAlignment(.trailing)
         }
