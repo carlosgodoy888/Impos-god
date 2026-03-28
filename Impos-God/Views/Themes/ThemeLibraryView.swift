@@ -6,18 +6,25 @@
 //
 
 
+
 import SwiftUI
 
 struct ThemeLibraryView: View {
     @EnvironmentObject var appViewModel: AppViewModel
 
-    // MARK: - Estado local de la pantalla
+    // MARK: - Estado local
     @State private var newThemeName: String = ""
     @State private var newThemeWords: String = ""
     @State private var searchText: String = ""
 
-    // MARK: - Temas filtrados por búsqueda
-    // Si no hay búsqueda, se muestran todos.
+    // MARK: - Tema visual actual
+    private var theme: AppTheme {
+        AppTheme.make(for: appViewModel.appearanceMode)
+    }
+
+    // MARK: - Filtrado de temas
+    // Si no hay texto, se muestran todos.
+    // Si hay texto, se filtra por nombre y por palabras.
     private var filteredThemes: [Theme] {
         let query = searchText
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -27,28 +34,23 @@ struct ThemeLibraryView: View {
             return appViewModel.allThemes
         }
 
-        return appViewModel.allThemes.filter { theme in
-            theme.name.lowercased().contains(query) ||
-            theme.words.joined(separator: " ").lowercased().contains(query)
+        return appViewModel.allThemes.filter { item in
+            item.name.lowercased().contains(query) ||
+            item.words.joined(separator: " ").lowercased().contains(query)
         }
     }
 
     var body: some View {
         ZStack {
-            // Fondo principal de la pantalla
-            backgroundGradient
+            theme.backgroundGradient
+                .ignoresSafeArea()
 
             List {
-                // Bloque de búsqueda
                 searchSection
-
-                // Bloque de creación de tema personalizado
                 createThemeSection
-
-                // Bloque de lista de temas
                 themesSection
             }
-            .scrollContentBackground(.hidden) // Oculta el fondo gris por defecto del List
+            .scrollContentBackground(.hidden)
             .listStyle(.insetGrouped)
         }
         .navigationTitle("Biblioteca")
@@ -63,27 +65,20 @@ private extension ThemeLibraryView {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Buscar")
                     .font(.title3.bold())
-                    .foregroundStyle(.white)
+                    .foregroundStyle(theme.primaryText)
 
-                Text("Encuentra temas por nombre o por palabras incluidas.")
+                Text("Encuentra temas por nombre o por alguna palabra incluida.")
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.75))
+                    .foregroundStyle(theme.secondaryText)
 
                 TextField("Buscar tema o palabra", text: $searchText)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
-                    .foregroundStyle(.white)
-                    .padding(12)
-                    .background(Color.white.opacity(0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .appFieldStyle(theme)
             }
             .padding(.vertical, 8)
         }
-        .listRowBackground(Color.white.opacity(0.08))
+        .listRowBackground(theme.sectionBackground)
     }
 
     var createThemeSection: some View {
@@ -91,31 +86,21 @@ private extension ThemeLibraryView {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Crear tema personalizado")
                     .font(.title3.bold())
-                    .foregroundStyle(.white)
+                    .foregroundStyle(theme.primaryText)
 
                 Text("Escribe un nombre y varias palabras separadas por comas.")
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.75))
+                    .foregroundStyle(theme.secondaryText)
 
                 TextField("Nombre del tema", text: $newThemeName)
-                    .foregroundStyle(.white)
-                    .padding(12)
-                    .background(Color.white.opacity(0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .textInputAutocapitalization(.words)
+                    .autocorrectionDisabled()
+                    .appFieldStyle(theme)
 
                 TextField("Palabras separadas por comas", text: $newThemeWords)
-                    .foregroundStyle(.white)
-                    .padding(12)
-                    .background(Color.white.opacity(0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .textInputAutocapitalization(.words)
+                    .autocorrectionDisabled()
+                    .appFieldStyle(theme)
 
                 Button {
                     saveCustomTheme()
@@ -127,7 +112,7 @@ private extension ThemeLibraryView {
                         .frame(height: 50)
                         .background(
                             LinearGradient(
-                                colors: [.green, .mint],
+                                colors: [theme.successAccent, .mint],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
@@ -137,53 +122,58 @@ private extension ThemeLibraryView {
             }
             .padding(.vertical, 8)
         }
-        .listRowBackground(Color.white.opacity(0.08))
+        .listRowBackground(theme.sectionBackground)
     }
 
     var themesSection: some View {
         Section {
-            ForEach(filteredThemes, id: \.id) { theme in
-                themeRow(theme)
+            ForEach(filteredThemes, id: \.id) { item in
+                themeRow(item)
             }
         } header: {
             Text("Temas disponibles")
-                .foregroundStyle(.white)
+                .foregroundStyle(theme.primaryText)
         }
     }
 }
 
 // MARK: - Fila de tema
 private extension ThemeLibraryView {
-    func themeRow(_ theme: Theme) -> some View {
+    func themeRow(_ item: Theme) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
-                Image(systemName: iconName(for: theme.category))
-                    .foregroundStyle(iconColor(for: theme.category))
+                // Icono de categoría
+                Image(systemName: iconName(for: item.category))
+                    .foregroundStyle(iconColor(for: item.category))
                     .frame(width: 24)
 
-                Text(theme.name)
+                // Nombre del tema
+                Text(item.name)
                     .font(.headline)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(theme.primaryText)
 
                 Spacer()
 
-                Text(theme.category.rawValue)
+                // Badge de categoría
+                Text(item.category.rawValue)
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(theme.chipText)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
-                    .background(iconColor(for: theme.category).opacity(0.25))
+                    .background(iconColor(for: item.category).opacity(0.22))
                     .clipShape(Capsule())
             }
 
-            Text(theme.words.prefix(4).joined(separator: ", "))
+            // Vista previa de palabras
+            Text(item.words.prefix(4).joined(separator: ", "))
                 .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.75))
+                .foregroundStyle(theme.secondaryText)
                 .lineLimit(2)
 
-            if theme.isCustom {
+            // Solo los personalizados se pueden eliminar
+            if item.isCustom {
                 Button(role: .destructive) {
-                    appViewModel.deleteCustomTheme(theme)
+                    appViewModel.deleteCustomTheme(item)
                 } label: {
                     Label("Eliminar tema", systemImage: "trash")
                 }
@@ -191,33 +181,25 @@ private extension ThemeLibraryView {
             }
         }
         .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 18)
-                .fill(Color.white.opacity(0.08))
-        )
+        .background(theme.cardBackground)
         .overlay(
             RoundedRectangle(cornerRadius: 18)
-                .stroke(iconColor(for: theme.category).opacity(0.20), lineWidth: 1)
+                .stroke(iconColor(for: item.category).opacity(0.18), lineWidth: 1)
         )
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .shadow(color: theme.shadowColor, radius: 6, x: 0, y: 3)
         .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
     }
 }
 
-// MARK: - Helpers visuales
+// MARK: - Helpers
 private extension ThemeLibraryView {
-    var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                Color(red: 0.06, green: 0.06, blue: 0.14),
-                Color(red: 0.12, green: 0.10, blue: 0.26),
-                Color(red: 0.08, green: 0.14, blue: 0.22)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-        .ignoresSafeArea()
+    func saveCustomTheme() {
+        appViewModel.addCustomTheme(name: newThemeName, wordsText: newThemeWords)
+        newThemeName = ""
+        newThemeWords = ""
     }
 
     func iconName(for category: ThemeCategory) -> String {
@@ -244,12 +226,6 @@ private extension ThemeLibraryView {
         case .custom:
             return .green
         }
-    }
-
-    func saveCustomTheme() {
-        appViewModel.addCustomTheme(name: newThemeName, wordsText: newThemeWords)
-        newThemeName = ""
-        newThemeWords = ""
     }
 }
 
