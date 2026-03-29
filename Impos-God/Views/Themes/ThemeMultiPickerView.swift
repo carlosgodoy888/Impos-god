@@ -5,97 +5,50 @@
 //  Created by Carlos Godoy Valverde on 27/3/26.
 //
 
+
 import SwiftUI
 
 struct ThemeMultiPickerView: View {
     @EnvironmentObject var appViewModel: AppViewModel
-    @Binding var selectedThemeIDs: Set<UUID>
 
+    @Binding var selectedThemeIDs: Set<UUID>
     @State private var searchText: String = ""
 
+    // Tema visual actual
+    private var theme: AppTheme {
+        AppTheme.make(for: appViewModel.appearanceMode)
+    }
+
+    // Temas filtrados por búsqueda
     private var filteredThemes: [Theme] {
-        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let query = searchText
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
 
         if query.isEmpty {
             return appViewModel.allThemes
         }
 
-        return appViewModel.allThemes.filter { theme in
-            theme.name.lowercased().contains(query) ||
-            theme.words.joined(separator: " ").lowercased().contains(query)
+        return appViewModel.allThemes.filter { item in
+            item.name.lowercased().contains(query) ||
+            item.words.joined(separator: " ").lowercased().contains(query)
         }
+    }
+
+    // Temas seleccionados actualmente
+    private var selectedThemes: [Theme] {
+        appViewModel.allThemes.filter { selectedThemeIDs.contains($0.id) }
     }
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.07, green: 0.07, blue: 0.16),
-                    Color(red: 0.12, green: 0.10, blue: 0.28),
-                    Color(red: 0.07, green: 0.14, blue: 0.22)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            theme.backgroundGradient
+                .ignoresSafeArea()
 
             List {
-                Section {
-                    TextField("Buscar tema o palabra", text: $searchText)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .foregroundStyle(.white)
-                } header: {
-                    Text("Buscar")
-                        .foregroundStyle(.white)
-                }
-
-                Section {
-                    ForEach(filteredThemes, id: \.id) { theme in
-                        Button {
-                            toggle(theme.id)
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: iconName(for: theme.category))
-                                    .foregroundStyle(iconColor(for: theme.category))
-
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(theme.name)
-                                        .foregroundStyle(.white)
-                                        .font(.headline)
-
-                                    Text(theme.words.prefix(4).joined(separator: ", "))
-                                        .foregroundStyle(.white.opacity(0.75))
-                                        .font(.subheadline)
-                                        .lineLimit(2)
-                                }
-
-                                Spacer()
-
-                                Image(systemName: selectedThemeIDs.contains(theme.id) ? "checkmark.circle.fill" : "circle")
-                                    .foregroundStyle(selectedThemeIDs.contains(theme.id) ? .green : .white.opacity(0.5))
-                                    .font(.title3)
-                            }
-                            .padding(.vertical, 6)
-                        }
-                        .listRowBackground(Color.white.opacity(0.08))
-                    }
-                } header: {
-                    Text("Selecciona los temas disponibles para esta partida")
-                        .foregroundStyle(.white)
-                }
-
-                Section {
-                    HStack {
-                        Text("Temas seleccionados")
-                            .foregroundStyle(.white)
-                        Spacer()
-                        Text("\(selectedThemeIDs.count)")
-                            .foregroundStyle(.white)
-                            .fontWeight(.bold)
-                    }
-                }
-                .listRowBackground(Color.white.opacity(0.08))
+                searchSection
+                selectedSummarySection
+                themesSection
             }
             .scrollContentBackground(.hidden)
             .listStyle(.insetGrouped)
@@ -103,8 +56,151 @@ struct ThemeMultiPickerView: View {
         .navigationTitle("Temas de la partida")
         .navigationBarTitleDisplayMode(.inline)
     }
+}
 
-    private func toggle(_ id: UUID) {
+// MARK: - Secciones
+private extension ThemeMultiPickerView {
+    var searchSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Buscar")
+                    .font(.title3.bold())
+                    .foregroundStyle(theme.primaryText)
+
+                Text("Marca varios temas para que la app randomice solo dentro de esa selección.")
+                    .font(.subheadline)
+                    .foregroundStyle(theme.secondaryText)
+
+                TextField("Buscar tema o palabra", text: $searchText)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .appFieldStyle(theme)
+            }
+            .padding(.vertical, 8)
+        }
+        .listRowBackground(theme.sectionBackground)
+    }
+
+    var selectedSummarySection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Selección actual")
+                    .font(.title3.bold())
+                    .foregroundStyle(theme.primaryText)
+
+                HStack {
+                    Text("Temas marcados")
+                        .foregroundStyle(theme.secondaryText)
+
+                    Spacer()
+
+                    Text("\(selectedThemeIDs.count)")
+                        .foregroundStyle(theme.primaryText)
+                        .font(.title3.bold())
+                }
+
+                if selectedThemes.isEmpty {
+                    Text("Todavía no has marcado ningún tema.")
+                        .font(.subheadline)
+                        .foregroundStyle(theme.secondaryText)
+                } else {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(selectedThemes, id: \.id) { item in
+                                Text(item.name)
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(theme.chipText)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(iconColor(for: item.category).opacity(0.22))
+                                    .clipShape(Capsule())
+                            }
+                        }
+                        .padding(.vertical, 2)
+                    }
+                }
+            }
+            .padding(.vertical, 8)
+        }
+        .listRowBackground(theme.sectionBackground)
+    }
+
+    var themesSection: some View {
+        Section {
+            ForEach(filteredThemes, id: \.id) { item in
+                Button {
+                    toggle(item.id)
+                } label: {
+                    rowView(for: item)
+                }
+                .buttonStyle(.plain)
+            }
+        } header: {
+            Text("Temas disponibles")
+                .foregroundStyle(theme.primaryText)
+        }
+    }
+}
+
+// MARK: - Fila de tema
+private extension ThemeMultiPickerView {
+    func rowView(for item: Theme) -> some View {
+        let isSelected = selectedThemeIDs.contains(item.id)
+
+        return HStack(spacing: 12) {
+            Image(systemName: iconName(for: item.category))
+                .foregroundStyle(iconColor(for: item.category))
+                .frame(width: 24)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(item.name)
+                    .font(.headline)
+                    .foregroundStyle(theme.primaryText)
+
+                Text(item.words.prefix(4).joined(separator: ", "))
+                    .font(.subheadline)
+                    .foregroundStyle(theme.secondaryText)
+                    .lineLimit(2)
+            }
+
+            Spacer()
+
+            VStack(spacing: 8) {
+                Text(item.category.rawValue)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(theme.chipText)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(iconColor(for: item.category).opacity(0.22))
+                    .clipShape(Capsule())
+
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isSelected ? theme.successAccent : theme.tertiaryText)
+                    .font(.title3)
+            }
+        }
+        .padding(14)
+        .background(theme.cardBackground)
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(
+                    isSelected
+                    ? theme.successAccent.opacity(0.55)
+                    : iconColor(for: item.category).opacity(0.16),
+                    lineWidth: isSelected ? 2 : 1
+                )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .shadow(color: theme.shadowColor, radius: 6, x: 0, y: 3)
+        .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+    }
+}
+
+// MARK: - Helpers
+private extension ThemeMultiPickerView {
+    func toggle(_ id: UUID) {
         if selectedThemeIDs.contains(id) {
             selectedThemeIDs.remove(id)
         } else {
@@ -112,7 +208,7 @@ struct ThemeMultiPickerView: View {
         }
     }
 
-    private func iconName(for category: ThemeCategory) -> String {
+    func iconName(for category: ThemeCategory) -> String {
         switch category {
         case .actualidad:
             return "bolt.fill"
@@ -125,7 +221,7 @@ struct ThemeMultiPickerView: View {
         }
     }
 
-    private func iconColor(for category: ThemeCategory) -> Color {
+    func iconColor(for category: ThemeCategory) -> Color {
         switch category {
         case .actualidad:
             return .orange
