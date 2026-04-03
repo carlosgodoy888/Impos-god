@@ -6,11 +6,11 @@
 //
 
 
+
 import Foundation
 import Combine
 
 final class AppViewModel: ObservableObject {
-    // MARK: - Modo visual general de la app
     enum AppearanceMode: String, CaseIterable, Identifiable, Codable {
         case darkBlue = "Azul oscuro"
         case lightBlue = "Azul claro"
@@ -27,26 +27,19 @@ final class AppViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Temas base cargados desde el catálogo
     @Published var builtInThemes: [Theme] = ThemeCatalog.all
-
-    // MARK: - Temas personalizados del usuario
     @Published var customThemes: [Theme] = []
 
-    // MARK: - Configuración del impostor
     @Published var impostorHintsEnabled: Bool = true
     @Published var impostorHintStyle: ImpostorHintStyle = .verySoft
 
-    // MARK: - Configuración visual
     @Published var appearanceMode: AppearanceMode = .darkBlue
 
-    // MARK: - Claves de persistencia
     private let customThemesKey = "customThemes"
     private let impostorHintsEnabledKey = "impostorHintsEnabled"
     private let impostorHintStyleKey = "impostorHintStyle"
     private let appearanceModeKey = "appearanceMode"
 
-    // MARK: - Todos los temas disponibles
     var allThemes: [Theme] {
         builtInThemes + customThemes
     }
@@ -57,8 +50,11 @@ final class AppViewModel: ObservableObject {
         loadAppearanceSettings()
     }
 
-    // MARK: - Gestión de temas personalizados
     func addCustomTheme(name: String, wordsText: String) {
+        addCustomTheme(name: name, wordsText: wordsText, category: .custom)
+    }
+
+    func addCustomTheme(name: String, wordsText: String, category: ThemeCategory) {
         let cleanedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
 
         let cleanedWords = wordsText
@@ -72,11 +68,31 @@ final class AppViewModel: ObservableObject {
         let newTheme = Theme(
             name: cleanedName,
             words: cleanedWords,
-            category: .custom,
+            category: category,
             isCustom: true
         )
 
         customThemes.append(newTheme)
+        saveCustomThemes()
+    }
+
+    func updateCustomTheme(themeID: UUID, newName: String, newWordsText: String, newCategory: ThemeCategory) {
+        let cleanedName = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let cleanedWords = newWordsText
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        guard !cleanedName.isEmpty else { return }
+        guard !cleanedWords.isEmpty else { return }
+        guard let index = customThemes.firstIndex(where: { $0.id == themeID }) else { return }
+
+        customThemes[index].name = cleanedName
+        customThemes[index].words = cleanedWords
+        customThemes[index].category = newCategory
+        customThemes[index].isCustom = true
+
         saveCustomThemes()
     }
 
@@ -85,7 +101,6 @@ final class AppViewModel: ObservableObject {
         saveCustomThemes()
     }
 
-    // MARK: - Configuración de pistas
     func setImpostorHintsEnabled(_ enabled: Bool) {
         impostorHintsEnabled = enabled
         UserDefaults.standard.set(enabled, forKey: impostorHintsEnabledKey)
@@ -96,13 +111,11 @@ final class AppViewModel: ObservableObject {
         UserDefaults.standard.set(style.rawValue, forKey: impostorHintStyleKey)
     }
 
-    // MARK: - Configuración visual
     func setAppearanceMode(_ mode: AppearanceMode) {
         appearanceMode = mode
         UserDefaults.standard.set(mode.rawValue, forKey: appearanceModeKey)
     }
 
-    // MARK: - Persistencia: temas personalizados
     private func saveCustomThemes() {
         do {
             let data = try JSONEncoder().encode(customThemes)
@@ -123,7 +136,6 @@ final class AppViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Persistencia: pistas
     private func loadHintSettings() {
         if UserDefaults.standard.object(forKey: impostorHintsEnabledKey) != nil {
             impostorHintsEnabled = UserDefaults.standard.bool(forKey: impostorHintsEnabledKey)
@@ -135,7 +147,6 @@ final class AppViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Persistencia: apariencia
     private func loadAppearanceSettings() {
         if let rawValue = UserDefaults.standard.string(forKey: appearanceModeKey),
            let mode = AppearanceMode(rawValue: rawValue) {

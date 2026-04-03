@@ -12,19 +12,21 @@ import SwiftUI
 struct ThemeLibraryView: View {
     @EnvironmentObject var appViewModel: AppViewModel
 
-    // MARK: - Estado local
+    // MARK: - Estado de formulario
     @State private var newThemeName: String = ""
     @State private var newThemeWords: String = ""
+    @State private var selectedCategory: ThemeCategory = .custom
     @State private var searchText: String = ""
+
+    // MARK: - Estado de edición
+    @State private var editingThemeID: UUID?
 
     // MARK: - Tema visual actual
     private var theme: AppTheme {
         AppTheme.make(for: appViewModel.appearanceMode)
     }
 
-    // MARK: - Filtrado de temas
-    // Si no hay texto, se muestran todos.
-    // Si hay texto, se filtra por nombre y por palabras.
+    // MARK: - Temas filtrados por búsqueda
     private var filteredThemes: [Theme] {
         let query = searchText
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -40,6 +42,11 @@ struct ThemeLibraryView: View {
         }
     }
 
+    // MARK: - Saber si estamos editando
+    private var isEditing: Bool {
+        editingThemeID != nil
+    }
+
     var body: some View {
         ZStack {
             theme.backgroundGradient
@@ -47,7 +54,7 @@ struct ThemeLibraryView: View {
 
             List {
                 searchSection
-                createThemeSection
+                createOrEditThemeSection
                 themesSection
             }
             .scrollContentBackground(.hidden)
@@ -81,14 +88,16 @@ private extension ThemeLibraryView {
         .listRowBackground(theme.sectionBackground)
     }
 
-    var createThemeSection: some View {
+    var createOrEditThemeSection: some View {
         Section {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Crear tema personalizado")
+                Text(isEditing ? "Editar tema personalizado" : "Crear tema personalizado")
                     .font(.title3.bold())
                     .foregroundStyle(theme.primaryText)
 
-                Text("Escribe un nombre y varias palabras separadas por comas.")
+                Text(isEditing
+                     ? "Modifica el nombre, las palabras y la categoría del tema."
+                     : "Escribe un nombre, varias palabras y selecciona una categoría.")
                     .font(.subheadline)
                     .foregroundStyle(theme.secondaryText)
 
@@ -102,10 +111,23 @@ private extension ThemeLibraryView {
                     .autocorrectionDisabled()
                     .appFieldStyle(theme)
 
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Categoría")
+                        .font(.headline)
+                        .foregroundStyle(theme.primaryText)
+
+                    Picker("Categoría", selection: $selectedCategory) {
+                        ForEach(ThemeCategory.allCases) { category in
+                            Text(category.rawValue).tag(category)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
                 Button {
-                    saveCustomTheme()
+                    saveOrUpdateTheme()
                 } label: {
-                    Text("Guardar tema")
+                    Text(isEditing ? "Guardar cambios" : "Guardar tema")
                         .font(.headline)
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
@@ -118,6 +140,24 @@ private extension ThemeLibraryView {
                             )
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+
+                if isEditing {
+                    Button {
+                        resetForm()
+                    } label: {
+                        Text("Cancelar edición")
+                            .font(.headline)
+                            .foregroundStyle(theme.primaryText)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .background(theme.cardBackground)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(theme.cardBorder, lineWidth: 1)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                    }
                 }
             }
             .padding(.vertical, 8)
@@ -142,19 +182,16 @@ private extension ThemeLibraryView {
     func themeRow(_ item: Theme) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
-                // Icono de categoría
                 Image(systemName: iconName(for: item.category))
                     .foregroundStyle(iconColor(for: item.category))
                     .frame(width: 24)
 
-                // Nombre del tema
                 Text(item.name)
                     .font(.headline)
                     .foregroundStyle(theme.primaryText)
 
                 Spacer()
 
-                // Badge de categoría
                 Text(item.category.rawValue)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(theme.chipText)
@@ -164,18 +201,31 @@ private extension ThemeLibraryView {
                     .clipShape(Capsule())
             }
 
-            // Vista previa de palabras
             Text(item.words.prefix(4).joined(separator: ", "))
                 .font(.subheadline)
                 .foregroundStyle(theme.secondaryText)
                 .lineLimit(2)
 
-            // Solo los personalizados se pueden eliminar
             if item.isCustom {
-                Button(role: .destructive) {
-                    appViewModel.deleteCustomTheme(item)
-                } label: {
-                    Label("Eliminar tema", systemImage: "trash")
+                HStack(spacing: 10) {
+                    Button {
+                        startEditing(item)
+                    } label: {
+                        Label("Editar", systemImage: "pencil")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button(role: .destructive) {
+                        appViewModel.deleteCustomTheme(item)
+                        if editingThemeID == item.id {
+                            resetForm()
+                        }
+                    } label: {
+                        Label("Eliminar", systemImage: "trash")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
                 }
                 .padding(.top, 4)
             }
@@ -194,14 +244,44 @@ private extension ThemeLibraryView {
     }
 }
 
-// MARK: - Helpers
+// MARK: - Lógica
 private extension ThemeLibraryView {
-    func saveCustomTheme() {
-        appViewModel.addCustomTheme(name: newThemeName, wordsText: newThemeWords)
-        newThemeName = ""
-        newThemeWords = ""
+    func saveOrUpdateTheme() {
+        if let editingThemeID {
+            appViewModel.updateCustomTheme(
+                themeID: editingThemeID,
+                newName: newThemeName,
+                newWordsText: newThemeWords,
+                newCategory: selectedCategory
+            )
+        } else {
+            appViewModel.addCustomTheme(
+                name: newThemeName,
+                wordsText: newThemeWords,
+                category: selectedCategory
+            )
+        }
+
+        resetForm()
     }
 
+    func startEditing(_ themeToEdit: Theme) {
+        editingThemeID = themeToEdit.id
+        newThemeName = themeToEdit.name
+        newThemeWords = themeToEdit.words.joined(separator: ", ")
+        selectedCategory = themeToEdit.category
+    }
+
+    func resetForm() {
+        editingThemeID = nil
+        newThemeName = ""
+        newThemeWords = ""
+        selectedCategory = .custom
+    }
+}
+
+// MARK: - Helpers visuales
+private extension ThemeLibraryView {
     func iconName(for category: ThemeCategory) -> String {
         switch category {
         case .actualidad:

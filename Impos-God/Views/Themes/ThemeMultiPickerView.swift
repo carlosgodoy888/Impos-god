@@ -6,6 +6,7 @@
 //
 
 
+
 import SwiftUI
 
 struct ThemeMultiPickerView: View {
@@ -14,12 +15,10 @@ struct ThemeMultiPickerView: View {
     @Binding var selectedThemeIDs: Set<UUID>
     @State private var searchText: String = ""
 
-    // Tema visual actual
     private var theme: AppTheme {
         AppTheme.make(for: appViewModel.appearanceMode)
     }
 
-    // Temas filtrados por búsqueda
     private var filteredThemes: [Theme] {
         let query = searchText
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -35,7 +34,6 @@ struct ThemeMultiPickerView: View {
         }
     }
 
-    // Temas seleccionados actualmente
     private var selectedThemes: [Theme] {
         appViewModel.allThemes.filter { selectedThemeIDs.contains($0.id) }
     }
@@ -58,7 +56,6 @@ struct ThemeMultiPickerView: View {
     }
 }
 
-// MARK: - Secciones
 private extension ThemeMultiPickerView {
     var searchSection: some View {
         Section {
@@ -140,15 +137,12 @@ private extension ThemeMultiPickerView {
                 .foregroundStyle(theme.primaryText)
         }
     }
-}
 
-// MARK: - Fila de tema
-private extension ThemeMultiPickerView {
     func rowView(for item: Theme) -> some View {
         let isSelected = selectedThemeIDs.contains(item.id)
 
         return HStack(spacing: 12) {
-            Image(systemName: iconName(for: item.category))
+            Image(systemName: item.category.systemImage)
                 .foregroundStyle(iconColor(for: item.category))
                 .frame(width: 24)
 
@@ -196,28 +190,12 @@ private extension ThemeMultiPickerView {
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
     }
-}
 
-// MARK: - Helpers
-private extension ThemeMultiPickerView {
     func toggle(_ id: UUID) {
         if selectedThemeIDs.contains(id) {
             selectedThemeIDs.remove(id)
         } else {
             selectedThemeIDs.insert(id)
-        }
-    }
-
-    func iconName(for category: ThemeCategory) -> String {
-        switch category {
-        case .actualidad:
-            return "bolt.fill"
-        case .series:
-            return "sparkles.tv.fill"
-        case .general:
-            return "globe.europe.africa.fill"
-        case .custom:
-            return "slider.horizontal.3"
         }
     }
 
